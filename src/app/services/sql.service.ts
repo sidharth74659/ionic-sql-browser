@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { IDBPDatabase, openDB } from 'idb';
 import initSqlJs, { Database } from 'sql.js/dist/sql-wasm';
 
 
@@ -8,14 +9,81 @@ import initSqlJs, { Database } from 'sql.js/dist/sql-wasm';
 export class SqlService {
   private db!: Database;
 
+  private SQL: any;
+  private idb!: IDBPDatabase;
+
   constructor() { }
 
   async initializeDatabase() {
-    const SQL = await initSqlJs({
+    this.SQL = await initSqlJs({
       locateFile: file => `assets/${file}`
     });
-    this.db = new SQL.Database();
+
+    // this.db = new SQL.Database();
+
+    // Open IndexedDB
+    this.idb = await openDB('SqliteStorage', 1, {
+      upgrade(db) {
+        db.createObjectStore('database');
+      },
+    });
+
+    // Try to load existing database from IndexedDB
+    const savedDb = await this.idb.get('database', 'sqliteDb');
+    if (savedDb) {
+      this.db = new this.SQL.Database(savedDb);
+    } else {
+      this.db = new this.SQL.Database();
+    }
   }
+
+  executeQuery(query: string): any[] {
+    try {
+      const result = this.db.exec(query);
+      this.saveDatabase(); // Save after each query
+      return result;
+    } catch (error) {
+      console.error('SQL Error:', error);
+      throw error;
+    }
+  }
+
+  private async saveDatabase() {
+    const data = this.db.export();
+    await this.idb.put('database', data, 'sqliteDb');
+  }
+
+  async exportDatabase(): Promise<Uint8Array> {
+    return this.db.export();
+  }
+
+  async importDatabase(data: Uint8Array) {
+    this.db = new this.SQL.Database(data);
+    await this.saveDatabase();
+  }
+
+  async clearDatabase() {
+    // TODO: To be Tested
+    this.db = new this.SQL.Database();
+    await this.saveDatabase();
+  }
+
+  /* 
+    async initializeDatabase() {
+      const SQL = await initSqlJs();
+      this.db = new SQL.Database();
+    }
+   
+    executeQuery(query: string): any[] {
+    try {
+      const result = this.db.exec(query);
+      return result;
+    } catch (error) {
+      console.error('SQL Error:', error);
+      throw error;
+    }
+  }
+ */
 
   getSqlCommands() {
     return ([
@@ -25,7 +93,7 @@ export class SqlService {
       { value: "DELETE FROM users WHERE name = 'john_doe';", displayText: "Delete John Doe" }
     ]);
   }
-  
+
   getAdvancedSqlCommands() {
     return ([
       {
@@ -58,20 +126,5 @@ export class SqlService {
         displayText: "Bulk insertion"
       }
     ]);
-  }
-/* 
-  async initializeDatabase() {
-    const SQL = await initSqlJs();
-    this.db = new SQL.Database();
-  }
- */
-  executeQuery(query: string): any[] {
-    try {
-      const result = this.db.exec(query);
-      return result;
-    } catch (error) {
-      console.error('SQL Error:', error);
-      throw error;
-    }
   }
 }

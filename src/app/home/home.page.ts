@@ -22,9 +22,9 @@ export class HomePage implements OnInit {
     this.sqlCommands = this.sqlService.getSqlCommands();
     this.advancedSqlCommands = this.sqlService.getAdvancedSqlCommands();
 
-    this.executeQuery('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT)');
-    this.executeQuery('INSERT INTO users (name, email) VALUES ("John Doe", "john@example.com")');
-    this.executeQuery(`INSERT INTO users (name, email) VALUES ("Alice", "alice@example.com");UPDATE users SET email = 'newalice@example.com' WHERE name = 'Alice'`);
+    // this.executeQuery('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT)');
+    // this.executeQuery('INSERT INTO users (name, email) VALUES ("John Doe", "john@example.com")');
+    // this.executeQuery(`INSERT INTO users (name, email) VALUES ("Alice", "alice@example.com");UPDATE users SET email = 'newalice@example.com' WHERE name = 'Alice'`);
 
     // Display the first command by default
     this.executeQuery(this.sqlCommands[0].value);
@@ -33,6 +33,7 @@ export class HomePage implements OnInit {
   }
 
   async checkStorage() {
+    // https://web.dev/articles/storage-for-the-web#check
     if (navigator?.storage?.estimate) {
       const quota = await navigator.storage.estimate();
       if (quota.usage == null || quota.quota == null) {
@@ -42,7 +43,8 @@ export class HomePage implements OnInit {
 
       const percentageUsed = ((quota.usage) / (quota.quota)) * 100;
       console.info(`You've used ${percentageUsed}% of the available storage.`);
-      console.info(`You can use up to ${Math.round(quota.quota / (1024 * 1024))} MB.`);
+      console.info(JSON.stringify(quota, null, 2));
+      // console.info(`You can use up to ${Math.round(quota.quota / (1024 * 1024) * 100) / 100} MB. i.e. in GB: ${Math.round(quota.quota / (1024 * 1024 * 1024) * 100) / 100}`);
     }
   }
 
@@ -81,4 +83,49 @@ export class HomePage implements OnInit {
     toast.present();
   }
 
+  async exportDatabase() {
+    const data = await this.sqlService.exportDatabase();
+    const blob = new Blob([data], { type: 'application/octet-stream' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'database.sqlite';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+  
+  async importDatabase(event: any) {
+    const file = event.target.files[0];
+    const arrayBuffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+    await this.sqlService.importDatabase(uint8Array);
+    this.executeQuery('SELECT * FROM users'); // Refresh the displayed data
+  }
+
+  async testFileSizeLimit() {
+    let recordCount = 0;
+    try {
+      while (true) {
+        this.sqlService.executeQuery(`INSERT INTO users (name, email) VALUES ('User${recordCount}', 'user${recordCount}@example.com')`);
+        recordCount++;
+        if (recordCount % 1000 === 0) {
+          console.log(`Inserted ${recordCount} records`);
+        }
+      }
+    } catch (error: any) {
+      console.log(`Limit reached at ${recordCount} records. Error: ${error.message}`);
+      this.presentToast(`Limit reached at ${recordCount} records. Error: ${error.message}`);
+    }
+  }
+
+  async testPersistence() {
+    this.sqlService.executeQuery("INSERT INTO users (name, email) VALUES ('Bob', 'bob@example.com')");
+    const beforeReload = this.sqlService.executeQuery("SELECT * FROM users WHERE name = 'Bob'");
+    
+    // Simulate page reload by reinitializing the database
+    await this.sqlService.initializeDatabase();
+    
+    const afterReload = this.sqlService.executeQuery("SELECT * FROM users WHERE name = 'Bob'");
+    console.log('Data persists:', beforeReload.length === afterReload.length);
+  }
 }

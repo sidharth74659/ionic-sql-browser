@@ -12,21 +12,21 @@
       <ion-card-title>Enter SQL Query</ion-card-title>
     </ion-card-header>
     <ion-card-content>
-         <!-- Dropdown for default SQL commands -->
-         <ion-item>
-          <ion-label>Default Commands</ion-label>
-          <ion-select (ionChange)="setDefaultQuery($event)">
-            <ion-select-option *ngFor="let sqlCommand of sqlCommands" [value]="sqlCommand.value">
-              {{ sqlCommand.displayText }}
-            </ion-select-option>
-          </ion-select>
-        </ion-item>
+      <!-- Dropdown for default SQL commands -->
+      <ion-item *ngIf="sqlCommands.length">
+        <ion-label>Default Commands</ion-label>
+        <ion-select (ionChange)="setDefaultQuery($event)">
+          <ion-select-option *ngFor="let sqlCommand of sqlCommands" [value]="sqlCommand.value">
+            {{ sqlCommand.displayText }}
+          </ion-select-option>
+        </ion-select>
+      </ion-item>
       <ion-textarea [(ngModel)]="query" rows="4" placeholder="Enter your SQL query here..."></ion-textarea>
       <ion-button expand="block" (click)="executeQuery()">Execute Query</ion-button>
     </ion-card-content>
 
     <ion-card-content>
-      <ion-item>
+      <ion-item *ngIf="advancedSqlCommands.length">
         <ion-label>Advanced Commands</ion-label>
         <ion-select (ionChange)="setDefaultQuery($event)">
           <ion-select-option *ngFor="let sqlCommand of advancedSqlCommands" [value]="sqlCommand.value">
@@ -35,7 +35,8 @@
         </ion-select>
       </ion-item>
       <!-- Optionally, display the selected advanced query -->
-      <ion-textarea [(ngModel)]="query" rows="4" placeholder="Selected advanced SQL query will appear here..."></ion-textarea>
+      <ion-textarea [(ngModel)]="query" rows="4"
+        placeholder="Selected advanced SQL query will appear here..."></ion-textarea>
       <ion-button expand="block" (click)="executeQuery()">Execute Advanced Query</ion-button>
     </ion-card-content>
   </ion-card>
@@ -60,5 +61,10 @@
     </ion-card-content>
   </ion-card>
 
-  
+  <!-- 
+  * Make this toggleable * Test
+  <ion-button (click)="exportDatabase()">Export Database</ion-button>
+  <input type="file" (change)="importDatabase($event)" accept=".sqlite">
+  -->
+
 </ion-content>
