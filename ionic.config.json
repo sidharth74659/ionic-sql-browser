@@ -1,0 +1,7 @@
+{
+  "name": "sql-playground",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
