@@ -4,6 +4,7 @@
     - Create a function to generate a large number of records (e.g., 100,000)
     - Measure the time taken to insert these records
     - Test query performance on this large dataset
+    - check code-snippet at the end of this file with the side-heading: 'Test large datasets'
     b) Complex queries:
     - Write a query with multiple joins and subqueries
     - Measure execution time as the dataset grows
@@ -53,6 +54,47 @@
 
 ---
 
+### Code Snippet: Test large datasets
+
+```ts
+// Function to generate a large dataset
+function generateLargeDataset(size) {
+  const records = [];
+  for (let i = 0; i < size; i++) {
+    const record = {
+      id: i,
+      data: `Data ${i}`,
+      // Add more properties as needed
+    };
+    records.push(record);
+  }
+  return records;
+}
+
+// Function to simulate insertion of records into a database
+function insertRecordsIntoDatabase(records) {
+  console.time('InsertionTime');
+  // Assuming `database` is an array simulating the database
+  const database = [];
+  records.forEach(record => database.push(record));
+  console.timeEnd('InsertionTime');
+}
+
+// Function to test query performance on the dataset
+function queryPerformanceTest(database) {
+  console.time('QueryPerformance');
+  // Example query: Find a record with a specific id
+  const result = database.find(record => record.id === 50000);
+  console.timeEnd('QueryPerformance');
+  console.log('Query result:', result);
+}
+
+// Main
+const records = generateLargeDataset(100000);
+const database = []; // Simulating a database
+insertRecordsIntoDatabase(records);
+queryPerformanceTest(database);
+```
 
 Suggestions for further investigation:
 
