@@ -1,3 +1,5 @@
+Repo: [ionic-sql-browser](https://github.com/sidharth74659/ionic-sql-browser.git)
+
 ### References:
 - For SQL plugin: https://github.com/sql-js/sql.js
 - For IndexedDB: https://web.dev/articles/storage-for-the-web 
